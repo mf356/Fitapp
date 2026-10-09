@@ -402,6 +402,22 @@ function chart(a,u){
  const pts=a.map((x,i)=>(10+i*(300/(a.length-1))).toFixed(1)+','+(90-(x.v-mn)/sp*70).toFixed(1)).join(' ');
  return `<svg viewBox="0 0 320 110" role="img" aria-label="Verlauf"><polyline points="${pts}" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linejoin="round"/><text x="10" y="106" fill="var(--mu)" font-size="11">${fd(a[0].d)} · min ${mn}${u}</text><text x="310" y="106" text-anchor="end" fill="var(--mu)" font-size="11">${fd(a[a.length-1].d)} · max ${mx}${u}</text></svg>`}
 function addNum(list,id){const v=parseFloat($('#'+id).value.replace(',','.'));if(!v)return;S[list].push({d:today(),v});save();render()}
+function bpChart(bp){
+ if(!bp.length)return '<div class="tgt">Noch kein Wert gespeichert.</div>';
+ const a=bp.slice(-14),n=a.length,W=320,H=214,L=40,R=10,T=20,B=30,pw=W-L-R,ph=H-T-B;
+ const lo=Math.min(60,Math.floor((Math.min(...a.map(x=>x.v))-10)/20)*20),hi=Math.max(160,Math.ceil((Math.max(...a.map(x=>x.s))+10)/20)*20);
+ const X=i=>L+(n==1?pw/2:i*pw/(n-1)),Y=v=>T+ph-(v-lo)/(hi-lo)*ph;
+ let g='';
+ for(let v=lo;v<=hi;v+=20)g+=`<line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W-R}" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-width="1"/><text x="${L-5}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mu)">${v}</text>`;
+ g+=`<text x="4" y="${T-9}" font-size="10" fill="var(--mu)">mmHg</text>`;
+ [[140,'var(--hl)'],[90,'var(--ac)']].forEach(([v,c])=>{g+=`<line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W-R}" y2="${Y(v).toFixed(1)}" stroke="${c}" stroke-width="1.2" stroke-dasharray="5 4" opacity=".6"/>`});
+ const line=(k,c)=>n>1?`<polyline points="${a.map((x,i)=>X(i).toFixed(1)+','+Y(x[k]).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/>`:'';
+ g+=line('s','var(--hl)')+line('v','var(--ac)');
+ a.forEach((x,i)=>{const lab=n<=8||i==n-1,ax=i==0&&n>1?'start':i==n-1&&n>1?'end':'middle';
+  g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(x.s).toFixed(1)}" r="3.6" fill="var(--hl)"/><circle cx="${X(i).toFixed(1)}" cy="${Y(x.v).toFixed(1)}" r="3.6" fill="var(--ac)"/>`;
+  if(lab)g+=`<text x="${X(i).toFixed(1)}" y="${(Y(x.s)-7).toFixed(1)}" text-anchor="${ax}" font-size="11" font-weight="600" fill="var(--tx)">${x.s}</text><text x="${X(i).toFixed(1)}" y="${(Y(x.v)+15).toFixed(1)}" text-anchor="${ax}" font-size="11" font-weight="600" fill="var(--tx)">${x.v}</text>`;
+  if(n<=7||i==0||i==n-1||i==Math.floor((n-1)/2))g+=`<text x="${X(i).toFixed(1)}" y="${H-10}" text-anchor="${ax}" font-size="11" fill="var(--mu)">${fd(x.d)}</text>`});
+ return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Blutdruckverlauf in mmHg, oberer und unterer Wert">${g}</svg><div class="tgt" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px"><span><b style="color:var(--hl)">●</b> oben (systolisch)</span><span><b style="color:var(--ac)">●</b> unten (diastolisch)</span></div><div class="tgt" style="margin-top:4px">Gestrichelt: 140 und 90 mmHg, ab diesen Werten gilt Blutdruck üblicherweise als erhöht. Das ersetzt keine ärztliche Einschätzung.${bp.length>14?' Gezeigt sind die letzten 14 Messungen.':''}</div>`}
 function addBP(){const a=parseInt($('#bs').value),b=parseInt($('#bd').value);if(!a||!b)return;(S.bp=S.bp||[]).push({d:today(),s:a,v:b});save();render()}
 function delBP(i){S.bp.splice(i,1);save();render()}
 function addPhoto(f){if(!f)return;const u=URL.createObjectURL(f),im=new Image();
@@ -425,7 +441,7 @@ function body(){
  h+=`<div class="card"><h2>Puls</h2><div class="row"><span class="num big">${lp?lp+' bpm':'–'}</span><span class="tgt">${dl(p)}</span></div>${chart(p,'')}${lst('p',' bpm')}<div class="row"><input id="pi" inputmode="numeric" placeholder="bpm" aria-label="Puls" style="width:100px"><button class="btn" onclick="addNum('p','pi')">Puls speichern</button></div></div>`;
  h+=hrHist();
  const bp=S.bp||[],lb=bp.length?bp[bp.length-1]:null;
- h+=`<div class="card"><h2>Blutdruck</h2><div class="row"><span class="num big">${lb?lb.s+'/'+lb.v+' mmHg':'–'}</span><span class="tgt">${dl(bp)}</span></div>${chart(bp.map(x=>({d:x.d,v:x.s})),'')}<div class="tgt">Verlauf des oberen (systolischen) Werts</div>${bp.slice(-5).reverse().map(x=>`<div class="li"><span>${wd(x.d).slice(0,2)} ${fd(x.d)}</span><span>${x.s}/${x.v} mmHg <button class="chip" aria-label="Eintrag löschen" onclick="delBP(${bp.indexOf(x)})">×</button></span></div>`).join('')}<div class="row" style="margin-top:10px"><input id="bs" inputmode="numeric" placeholder="oben" aria-label="Oberer Wert" style="width:80px"><input id="bd" inputmode="numeric" placeholder="unten" aria-label="Unterer Wert" style="width:80px"><button class="btn" onclick="addBP()">Blutdruck speichern</button></div></div>`;
+ h+=`<div class="card"><h2>Blutdruck</h2><div class="row"><span class="num big">${lb?lb.s+'/'+lb.v+' mmHg':'–'}</span><span class="tgt">${dl(bp)}</span></div>${bpChart(bp)}${bp.slice(-5).reverse().map(x=>`<div class="li"><span>${wd(x.d).slice(0,2)} ${fd(x.d)}</span><span>${x.s}/${x.v} mmHg <button class="chip" aria-label="Eintrag löschen" onclick="delBP(${bp.indexOf(x)})">×</button></span></div>`).join('')}<div class="row" style="margin-top:10px"><input id="bs" inputmode="numeric" placeholder="oben" aria-label="Oberer Wert" style="width:80px"><input id="bd" inputmode="numeric" placeholder="unten" aria-label="Unterer Wert" style="width:80px"><button class="btn" onclick="addBP()">Blutdruck speichern</button></div></div>`;
  h+=`<div class="card"><h2>Fotos</h2>`;
  if(ph.length>1)h+=`<div class="photos"><div><img src="${ph[0].s}" alt="Vorher"><div class="tgt">Vorher, ${fd(ph[0].d)}</div></div><div><img src="${ph[ph.length-1].s}" alt="Aktuell"><div class="tgt">Aktuell, ${fd(ph[ph.length-1].d)}</div></div></div>`;
  else h+='<div class="tgt">Mit zwei Fotos siehst du hier den Vorher-Nachher-Vergleich.</div>';
