@@ -129,7 +129,7 @@ function save(){try{localStorage.setItem('fit1',JSON.stringify(S))}catch(e){aler
 function plan(){
  const D=S.days;if(S.sel>=D.length)S.sel=0;
  const d=D[S.sel],ex=X[d.g][d.l];let tot=0,done=0;const dts=[...new Set(Object.entries(S.log).filter(([k,L])=>k.startsWith(wk()+'|'+S.sel+'|')&&L.t&&(L.d||L.w||L.r)).map(([k,L])=>L.t))].sort();
- let h='<div class="chips">'+D.map((x,i)=>`<button class="chip ${i==S.sel?'on':''}" onclick="S.sel=${i};render()">${x.g}</button>`).join('')+'</div>'+hrCard();
+ let h=trCard()+'<div class="chips">'+D.map((x,i)=>`<button class="chip ${i==S.sel?'on':''}" onclick="S.sel=${i};render()">${x.g}</button>`).join('')+'</div>'+hrCard();
  let body='';
  ex.forEach((e,ei)=>{const[n,s,r]=e.split('|');let sets='';
   for(let i=0;i<+s;i++){const k=wk()+'|'+S.sel+'|'+ei+'|'+i,L=S.log[k]||{};tot++;if(L.d)done++;
@@ -140,19 +140,29 @@ function plan(){
   for(let i=0;i<e.s;i++){const k=XK+'|x'+e.id+'|'+i,L=S.log[k]||{};tot++;if(L.d)done++;
    sets+=`<div class="set"><button class="chk ${L.d?'on':''}" aria-label="Satz ${i+1} abhaken" onclick="tog('${k}')">${i+1}</button><input inputmode="decimal" placeholder="kg" aria-label="Gewicht" value="${esc(L.w||'')}" onchange="inp('${k}','w',this.value)"><input inputmode="numeric" placeholder="Wdh." aria-label="Wiederholungen" value="${esc(L.r||'')}" onchange="inp('${k}','r',this.value)"></div>`}
   body+=`<div class="card ex"><h3>${esc(e.n)}</h3><div class="tgt">Zusatzübung, nur diese Woche</div>${infoBtn(S.sel+'|x'+e.id,e.n,d.g)}${noteField(e.n,d.g)}${sets}<div class="row" style="margin-top:10px"><button class="chip" onclick="xSet(${e.id})">+ Satz</button><button class="chip" onclick="xDel(${e.id})">Übung entfernen</button></div></div>`});
- const sg=sugg(d);
- body+=`<div class="card"><h3>Weitere Übung</h3><div class="row" style="margin-top:8px"><input id="xn" placeholder="Name der Übung" aria-label="Name der Übung" style="flex:1" maxlength="60"><button class="btn" onclick="xAdd()">Hinzufügen</button></div>${sg?`<p><button class="chip" onclick="xAddS()">Vorschlag: ${esc(sg)}</button></p>`:''}</div>`;
+ const sg=suggs(d);
+ body+=`<div class="card"><h3>Weitere Übung</h3><div class="row" style="margin-top:8px"><input id="xn" placeholder="Name der Übung" aria-label="Name der Übung" style="flex:1" maxlength="60"><button class="btn" onclick="xAdd()">Hinzufügen</button></div>${sg.length?`<div class="tgt" style="margin-top:10px">Vorschläge zur Auswahl, tippe zum Hinzufügen:</div><div class="chips" style="flex-wrap:wrap;margin-top:6px">${sg.map(n=>`<button class="chip" data-n="${esc(n)}" onclick="xAdd(this.dataset.n)">${esc(n)}</button>`).join('')}</div>`:''}</div>`;
  h+=`<div class="card"><div class="row"><select aria-label="Ort" onchange="S.days[S.sel].l=this.value;save();render()">${Object.entries(LOC).map(([k,v])=>`<option value="${k}" ${k==d.l?'selected':''}>${v}</option>`).join('')}</select></div><div class="bar"><i style="width:${tot?done/tot*100:0}%"></i></div><div class="tgt">${done} von ${tot} Sätzen erledigt${dts.length?', ausgeführt am '+dts.map(x=>wd(x).slice(0,2)+' '+fd(x)).join(' und '):''}</div></div>`+body;
  return h}
+function fmtDur(sec){const m=Math.round(sec/60);if(m<1)return'weniger als 1 Minute';if(m<60)return m+(m==1?' Minute':' Minuten');const h=Math.floor(m/60),r=m%60;return h+' Std'+(r?' '+r+' Min':'')}
+function clk(sec){sec=Math.max(0,Math.floor(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)}
+function trToday(){const a=(S.tl||[]).filter(x=>x.d==today());return{n:a.length,sec:a.reduce((t,x)=>t+x.sec,0)}}
+function trStart(){S.tr={t0:Date.now(),g:S.days[S.sel].g};save();render()}
+function trStop(){const t=S.tr;if(!t)return;const sec=(Date.now()-t.t0)/1000;if(sec>=30){S.tl=S.tl||[];S.tl.push({d:iso(new Date(t.t0)),t:new Date(t.t0).toTimeString().slice(0,5),g:t.g,sec:Math.round(sec)})}S.tr=null;save();render()}
+function trCard(){
+ if(S.tr)return `<div class="card"><div class="row" style="justify-content:space-between"><span><span class="num big" id="trt">${clk((Date.now()-S.tr.t0)/1000)}</span> <span class="tgt">Training läuft seit ${new Date(S.tr.t0).toTimeString().slice(0,5)} Uhr</span></span><button class="btn" onclick="trStop()">Stopp</button></div></div>`;
+ const t=trToday();
+ return `<div class="card"><div class="row" style="justify-content:space-between"><span><b>Training</b><div class="tgt">${t.n?'Heute trainiert: '+fmtDur(t.sec)+(t.n>1?' ('+t.n+' Einheiten)':''):'Starte die Zeit, wenn du loslegst.'}</div></span><button class="btn" onclick="trStart()">Training starten</button></div></div>`}
+setInterval(()=>{const e=document.getElementById('trt');if(e&&S.tr)e.textContent=clk((Date.now()-S.tr.t0)/1000)},1000);
 function noteKey(n,g){return g+'|'+String(n).toLowerCase()}
-function noteField(n,g){const k=noteKey(n,g),v=(S.nt&&S.nt[k])||'';return `<textarea class="note" rows="${v?2:1}" maxlength="500" placeholder="Notiz zur Übung, zum Beispiel was du abänderst" aria-label="Notiz zu ${esc(n)}" data-k="${esc(k)}" oninput="this.rows=this.value.length>40?3:1" onchange="setNote(this.dataset.k,this.value)">${esc(v)}</textarea>`}
+function noteField(n,g){const k=noteKey(n,g),v=(S.nt&&S.nt[k])||'';return `<textarea class="note" rows="${v?2:1}" maxlength="500" placeholder="Notiz zur Übung" aria-label="Notiz zu ${esc(n)}" data-k="${esc(k)}" oninput="this.rows=this.value.length>40?3:1" onchange="setNote(this.dataset.k,this.value)">${esc(v)}</textarea>`}
 function setNote(k,v){v=v.trim();S.nt=S.nt||{};if(v)S.nt[k]=v;else delete S.nt[k];save()}
 function ent(k){const L=S.log[k]=S.log[k]||{};if(!L.t){const p=k.split('|'),d=S.days[+p[1]];L.t=today();L.g=d.g;L.l=d.l;L.n=p[2][0]=='x'?((S.ex&&S.ex[p[0]+'|'+p[1]]||[]).find(e=>'x'+e.id==p[2])||{n:'Zusatzübung'}).n:X[d.g][d.l][+p[2]].split('|')[0]}return L}
-const SUG={Brust:{gym:['Butterfly-Maschine','Kabelzug von unten nach oben','Hantel-Pullover'],home:['Diamant-Liegestütze','Hantel-Pullover','Archer-Liegestütze']},
-Rücken:{gym:['Einarmiges Kurzhantelrudern','Gerader-Arm-Latzug','Hyperextensions'],home:['Band-Latzug','Kurzhantel-Pullover','Superman']},
-Beine:{gym:['Hip Thrusts','Beinbeuger liegend','Beinstrecker'],home:['Hip Thrusts','Goblet Squats','Step-ups']},
-Bauch:{gym:['Bauchmaschine','Hanging Knee Raises','Russian Twist'],home:['Bergsteiger','Seitstütz','Toter Käfer']},
-Schultern:{gym:['Arnold Press','Frontheben','Kabel-Seitheben'],home:['Arnold Press','Frontheben mit Kurzhanteln','Aufrechtes Rudern']}};
+const SUG={Brust:{gym:['Butterfly-Maschine','Kabelzug von unten nach oben','Hantel-Pullover','Kurzhantel-Bankdrücken','Brustpresse'],home:['Diamant-Liegestütze','Hantel-Pullover','Archer-Liegestütze','Liegestütze mit erhöhten Füßen','Kurzhantel-Bodenpresse']},
+Rücken:{gym:['Einarmiges Kurzhantelrudern','Gerader-Arm-Latzug','Hyperextensions','Rudermaschine','Langhantelrudern'],home:['Band-Latzug','Kurzhantel-Pullover','Superman','Band-Rudern','Reverse Fly mit Kurzhanteln']},
+Beine:{gym:['Hip Thrusts','Beinbeuger liegend','Beinstrecker','Goblet Squats','Step-ups','Wadenheben sitzend'],home:['Hip Thrusts','Goblet Squats','Step-ups','Glute Bridge','Sumo-Kniebeugen']},
+Bauch:{gym:['Bauchmaschine','Hanging Knee Raises','Russian Twist','Beinheben liegend','Seitstütz'],home:['Bergsteiger','Seitstütz','Toter Käfer','Russian Twist','Fahrrad-Crunches']},
+Schultern:{gym:['Arnold Press','Frontheben','Kabel-Seitheben','Schulterdrücken Maschine','Aufrechtes Rudern'],home:['Arnold Press','Frontheben mit Kurzhanteln','Aufrechtes Rudern','Band Seitheben','Kurzhantel-Shrugs']}};
 const OPEN={};
 function tgl(k){OPEN[k]=!OPEN[k];render()}
 const ML={schulter:'Schultern',brust:'Brust',bizeps:'Bizeps',trizeps:'Trizeps',bauch:'Bauch',trapez:'Trapez',lat:'Latissimus (breiter Rückenmuskel)',uruecken:'Unterer Rücken',quad:'Oberschenkel vorn',gesaess:'Gesäß',beinbeuger:'Oberschenkel hinten',waden:'Waden'};
@@ -250,7 +260,7 @@ cablecrunch:{P:[{s:[100,52],h:[98,88],k:[118,112],a:[96,118],f:[84,120],e:[104,4
 function patOf(n,g){const s=n.toLowerCase(),has=r=>r.test(s);
  if(has(/plank/))return'plank';
  if(has(/kabel-crunch/))return'cablecrunch';
- if(has(/hängend/))return'hangleg';
+ if(has(/hängend|hanging/))return'hangleg';
  if(has(/beinheben liegend/))return'legraise';
  if(has(/crunch|bauchmaschine|twist/))return'crunch';
  if(has(/seitheben/))return'latraise';
@@ -365,10 +375,9 @@ function parsePolar(t){const R=t.split(/\r?\n/).map(l=>l.split(/[,;]/).map(c=>c.
  return mkHR(v,du,d,tm,'')}
 function impHR(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=parsePolar(String(r.result));S.hr=S.hr||[];S.hr.push(o);save();HM='Messung importiert.'}catch(e){HM='In der Datei habe ich keine Pulswerte gefunden.'}render()};r.onerror=()=>{HM='Die Datei konnte nicht gelesen werden.';render()};r.readAsText(f)}
 function xKey(){return wk()+'|'+S.sel}
-function sugg(d){const have=[...X[d.g][d.l].map(e=>e.split('|')[0]),...((S.ex&&S.ex[xKey()])||[]).map(e=>e.n)].map(s=>s.toLowerCase());
- return (SUG[d.g][d.l=='gym'?'gym':'home']||[]).find(n=>!have.includes(n.toLowerCase()))||''}
+function suggs(d){const have=[...X[d.g][d.l].map(e=>e.split('|')[0]),...((S.ex&&S.ex[xKey()])||[]).map(e=>e.n)].map(s=>s.toLowerCase());
+ return (SUG[d.g][d.l=='gym'?'gym':'home']||[]).filter(n=>!have.includes(n.toLowerCase()))}
 function xAdd(n){n=(n||$('#xn').value).trim().slice(0,60);if(!n)return;S.ex=S.ex||{};(S.ex[xKey()]=S.ex[xKey()]||[]).push({id:Date.now(),n,s:3});save();render()}
-function xAddS(){const s=sugg(S.days[S.sel]);if(s)xAdd(s)}
 function xSet(id){const e=((S.ex||{})[xKey()]||[]).find(x=>x.id==id);if(e&&e.s<10){e.s++;save();render()}}
 function xDel(id){const a=(S.ex||{})[xKey()];if(a){S.ex[xKey()]=a.filter(x=>x.id!=id);save();render()}}
 function tog(k){const L=ent(k);L.d=!L.d;if(L.d)L.t=today();save();render()}
