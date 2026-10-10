@@ -142,7 +142,7 @@ function plan(){
   body+=`<div class="card ex"><h3>${esc(e.n)}</h3><div class="tgt">Zusatzübung, nur diese Woche</div>${infoBtn(S.sel+'|x'+e.id,e.n,d.g)}${noteField(e.n,d.g)}${sets}<div class="row" style="margin-top:10px"><button class="chip" onclick="xSet(${e.id})">+ Satz</button><button class="chip" onclick="xDel(${e.id})">Übung entfernen</button></div></div>`});
  const sg=suggs(d);
  body+=`<div class="card"><h3>Weitere Übung</h3><div class="row" style="margin-top:8px"><input id="xn" placeholder="Name der Übung" aria-label="Name der Übung" style="flex:1" maxlength="60"><button class="btn" onclick="xAdd()">Hinzufügen</button></div>${sg.length?`<div class="tgt" style="margin-top:10px">Vorschläge zur Auswahl, tippe zum Hinzufügen:</div><div class="chips" style="flex-wrap:wrap;margin-top:6px">${sg.map(n=>`<button class="chip" data-n="${esc(n)}" onclick="xAdd(this.dataset.n)">${esc(n)}</button>`).join('')}</div>`:''}</div>`;
- h+=`<div class="card"><div class="row"><select aria-label="Ort" onchange="S.days[S.sel].l=this.value;save();render()">${Object.entries(LOC).map(([k,v])=>`<option value="${k}" ${k==d.l?'selected':''}>${v}</option>`).join('')}</select></div><div class="bar"><i style="width:${tot?done/tot*100:0}%"></i></div><div class="tgt">${done} von ${tot} Sätzen erledigt${dts.length?', ausgeführt am '+dts.map(x=>wd(x).slice(0,2)+' '+fd(x)).join(' und '):''}</div></div>`+body;
+ h+=`<div class="card"><div class="row"><select aria-label="Ort" onchange="S.days[S.sel].l=this.value;save();render()">${Object.entries(LOC).map(([k,v])=>`<option value="${k}" ${k==d.l?'selected':''}>${v}</option>`).join('')}</select></div><div class="bar"><i style="width:${tot?done/tot*100:0}%"></i></div><div class="tgt">${done} von ${tot} Sätzen erledigt${dts.length?', ausgeführt am '+dts.map(x=>wd(x).slice(0,2)+' '+fd(x)).join(' und '):''}</div></div>`+body+finBtn();
  return h}
 function fmtDur(sec){const m=Math.round(sec/60);if(m<1)return'weniger als 1 Minute';if(m<60)return m+(m==1?' Minute':' Minuten');const h=Math.floor(m/60),r=m%60;return h+' Std'+(r?' '+r+' Min':'')}
 function clk(sec){sec=Math.max(0,Math.floor(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)}
@@ -393,6 +393,11 @@ function parsePolar(t){const R=t.split(/\r?\n/).map(l=>l.split(/[,;]/).map(c=>c.
  let du=v.length;const ui=ix(/^duration/i);if(ui>=0&&val[ui]){const q=val[ui].split(':').map(Number);if(q.length==3&&q.every(isFinite)&&q[0]*3600+q[1]*60+q[2]>0)du=q[0]*3600+q[1]*60+q[2]}
  return mkHR(v,du,d,tm,'')}
 function impHR(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=parsePolar(String(r.result));S.hr=S.hr||[];S.hr.push(o);save();HM='Messung importiert.'}catch(e){HM='In der Datei habe ich keine Pulswerte gefunden.'}render()};r.onerror=()=>{HM='Die Datei konnte nicht gelesen werden.';render()};r.readAsText(f)}
+function finBtn(){const pre=wk()+'|'+S.sel+'|',has=Object.keys(S.log).some(k=>k.startsWith(pre)&&k.split('|').length==4&&(S.log[k].d||S.log[k].w||S.log[k].r));
+ return has?`<div class="card"><button class="btn" style="width:100%" onclick="finishDay()">Training abschließen, Werte zurücksetzen</button><div class="tgt" style="margin-top:6px">Haken, Gewichte und Wiederholungen werden geleert, damit du beim nächsten Mal bei null startest. Im Verlauf bleiben sie gespeichert.</div></div>`:''}
+function finishDay(){const pre=wk()+'|'+S.sel+'|',ts=Date.now();
+ Object.keys(S.log).forEach(k=>{if(k.startsWith(pre)&&k.split('|').length==4){const L=S.log[k];if(L&&(L.d||L.w||L.r))S.log[k+'|a'+ts]=L;delete S.log[k]}});
+ save();render();scrollTo(0,0)}
 function xKey(){return wk()+'|'+S.sel}
 function suggs(d){const have=[...X[d.g][d.l].map(e=>e.split('|')[0]),...((S.ex&&S.ex[xKey()])||[]).map(e=>e.n)].map(s=>s.toLowerCase());
  return (SUG[d.g][d.l=='gym'?'gym':'home']||[]).filter(n=>!have.includes(n.toLowerCase()))}
@@ -474,9 +479,28 @@ function food(){
  L.map((x,i)=>`<div class="li"><span>${esc(x.n)}</span><span>${x.k} kcal <button class="chip" aria-label="Eintrag löschen" onclick="delF(${i})">×</button></span></div>`).join('')+
  `<div class="row" style="margin-top:10px"><input id="fn" placeholder="Mahlzeit" aria-label="Mahlzeit" style="flex:1"><input id="fk" inputmode="numeric" placeholder="kcal" aria-label="Kilokalorien" style="width:90px"><button class="btn" onclick="addF()">Hinzufügen</button></div>
  <div class="row" style="margin-top:10px"><label class="tgt" for="gl">Tagesziel (kcal)</label><input id="gl" inputmode="numeric" value="${S.goal}" style="width:100px" onchange="S.goal=+this.value||S.goal;save();render()"></div></div>`;
- h+=estHtml();h+=menuHtml();
+ h+=foodHist();h+=estHtml();h+=menuHtml();
  return h}
 let EST=null,ET='',EM='';
+let FR=7;
+function setFR(n){FR=n;render()}
+function kfmt(n){return String(n).replace(/\B(?=(\d{3})+$)/g,'.')}
+function foodHist(){
+ const days=[];for(let i=FR-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=iso(d);days.push({d:k,v:((S.f||{})[k]||[]).reduce((a,x)=>a+x.k,0)})}
+ const W=320,H=230,L=46,R=10,T=22,B=40,pw=W-L-R,ph=H-T-B,n=days.length,mx=Math.max(S.goal,...days.map(x=>x.v)),st=mx<=1500?250:mx<=3500?500:1000,hi=Math.ceil(mx*1.05/st)*st;
+ const Y=v=>T+ph-v/hi*ph,bw=pw/n,bar=Math.min(bw*.7,34);let g='';
+ for(let v=0;v<=hi;v+=st)g+=`<line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W-R}" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-width="1"/><text x="${L-5}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mu)">${kfmt(v)}</text>`;
+ g+=`<text x="4" y="${T-9}" font-size="10" fill="var(--mu)">kcal</text>`;
+ days.forEach((x,i)=>{const cx=L+bw*(i+.5);
+  if(x.v>0)g+=`<rect x="${(cx-bar/2).toFixed(1)}" y="${Y(x.v).toFixed(1)}" width="${bar.toFixed(1)}" height="${(ph-(Y(x.v)-T)).toFixed(1)}" rx="3" fill="${x.v>S.goal?'var(--hl2)':'var(--ac)'}"/>`;
+  if(n<=14&&x.v>0)g+=`<text x="${cx.toFixed(1)}" y="${(Y(x.v)-4).toFixed(1)}" text-anchor="middle" font-size="${n<=7?11:9}" font-weight="600" fill="var(--tx)">${kfmt(x.v)}</text>`;
+  const show=n<=7||(n<=14&&i%2==(n-1)%2)||(n>14&&(n-1-i)%5==0);
+  if(show){g+=`<text x="${cx.toFixed(1)}" y="${H-24}" text-anchor="middle" font-size="11" fill="var(--mu)">${n<=7?wd(x.d).slice(0,2):''}</text><text x="${cx.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="${n<=7?11:10}" fill="var(--mu)">${fd(x.d)}</text>`}});
+ g+=`<line x1="${L}" y1="${Y(S.goal).toFixed(1)}" x2="${W-R}" y2="${Y(S.goal).toFixed(1)}" stroke="var(--hl)" stroke-width="1.4" stroke-dasharray="5 4"/><text x="${W-R}" y="${(Y(S.goal)-4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--hl)">Ziel ${kfmt(S.goal)}</text>`;
+ const wv=days.filter(x=>x.v>0),avg=wv.length?Math.round(wv.reduce((a,x)=>a+x.v,0)/wv.length):0;
+ return `<div class="card"><h2>Kalorienverlauf</h2><div class="chips" style="margin:6px 0">${[7,14,30].map(r=>`<button class="chip ${r==FR?'on':''}" onclick="setFR(${r})">${r} Tage</button>`).join('')}</div>`+
+  `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kalorien pro Tag in kcal, letzte ${FR} Tage">${g}</svg>`+
+  `<div class="tgt">${wv.length?'Durchschnitt: '+kfmt(avg)+' kcal an '+wv.length+(wv.length==1?' Tag':' Tagen')+' mit Einträgen. ':'Noch keine Einträge in diesem Zeitraum. '}Blau: im Ziel, orange: über dem Tagesziel, gestrichelt: dein Ziel.</div></div>`}
 function estHtml(){
  const tot=EST?EST.it.reduce((a,x)=>a+x.k,0):0;
  return `<div class="card"><h2>Kalorien schätzen</h2><div class="tgt">Beschreibe deine Mahlzeit, zum Beispiel „4 Scheiben Vollkornbrot mit Camembert und Gurke". Du bekommst eine grobe Schätzung.</div><div class="row" style="margin-top:8px"><input id="et" placeholder="Was hast du gegessen?" aria-label="Mahlzeit beschreiben" value="${esc(ET)}" style="flex:1"><button class="btn" onclick="estimate()">Schätzen</button></div>${EM?`<p role="status">${esc(EM)}</p>`:''}`+
