@@ -456,9 +456,11 @@ function parsePolar(t){const R=t.split(/\r?\n/).map(l=>l.split(/[,;]/).map(c=>c.
  return mkHR(v,du,d,tm,'')}
 function impHR(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=parsePolar(String(r.result));S.hr=S.hr||[];S.hr.push(o);save();HM='Messung importiert.'}catch(e){HM='In der Datei habe ich keine Pulswerte gefunden.'}render()};r.onerror=()=>{HM='Die Datei konnte nicht gelesen werden.';render()};r.readAsText(f)}
 function finBtn(){const pre=wk()+'|'+S.sel+'|',has=Object.keys(S.log).some(k=>k.startsWith(pre)&&k.split('|').length==4&&(S.log[k].d||S.log[k].w||S.log[k].r));
- return has?`<div class="card"><button class="btn" style="width:100%" onclick="finishDay()">Training abschließen, Werte zurücksetzen</button><div class="tgt" style="margin-top:6px">Haken, Gewichte und Wiederholungen werden geleert, damit du beim nächsten Mal bei null startest. Im Verlauf bleiben sie gespeichert.</div></div>`:''}
+ return `<div class="card"><button class="btn" style="width:100%" onclick="finishDay()">Training abschließen, Werte zurücksetzen</button><div class="tgt" style="margin-top:6px">Haken, Gewichte und Wiederholungen werden geleert, damit du beim nächsten Mal bei null startest. Notizen und Werte bleiben im Verlauf gespeichert.</div></div>`}
 function finishDay(){const pre=wk()+'|'+S.sel+'|',ts=Date.now();
  Object.keys(S.log).forEach(k=>{if(k.startsWith(pre)&&k.split('|').length==4){const L=S.log[k];if(L&&(L.d||L.w||L.r))S.log[k+'|a'+ts]=L;delete S.log[k]}});
+ const d=S.days[S.sel],nm=[...X[d.g][d.l].map(e=>e.split('|')[0]),...((S.ex&&S.ex[xKey()])||[]).map(e=>e.n)];
+ S.nl=S.nl||[];nm.forEach(n=>{const k=noteKey(n,d.g);if(S.nt&&S.nt[k]){S.nl.push({t:today(),g:d.g,l:d.l,n,x:S.nt[k]});delete S.nt[k]}});
  save();render();scrollTo(0,0)}
 function xKey(){return wk()+'|'+S.sel}
 function suggs(d){const have=[...X[d.g][d.l].map(e=>e.split('|')[0]),...((S.ex&&S.ex[xKey()])||[]).map(e=>e.n)].map(s=>s.toLowerCase());
@@ -470,9 +472,10 @@ function tog(k){const L=ent(k);L.d=!L.d;if(L.d)L.t=today();save();render()}
 function inp(k,f,v){ent(k)[f]=v;save()}
 function hist(){
  const g={};Object.entries(S.log).sort(([a],[b])=>a<b?-1:a>b?1:0).forEach(([k,L])=>{if(L.t&&(L.d||L.w||L.r)){const o=g[L.t]=g[L.t]||{},gr=L.g+', '+LOC[L.l],e=(o[gr]=o[gr]||{});(e[L.n]=e[L.n]||[]).push({i:+k.split('|')[3]+1,L})}});
+ (S.nl||[]).forEach(q=>{const o=g[q.t]=g[q.t]||{},gr=q.g+', '+LOC[q.l],e=(o[gr]=o[gr]||{});(e[q.n]=e[q.n]||[]).push({note:q.x})});
  const ds=Object.keys(g).sort().reverse();
  if(!ds.length)return '<div class="card"><h2>Verlauf</h2><div class="tgt">Noch kein Training dokumentiert. Hake im Plan Sätze ab oder trage Gewichte ein, dann erscheint es hier mit Wochentag.</div></div>';
- return ds.map(t=>`<div class="card"><h2>${wd(t)}, ${fd(t)}${t.slice(0,4)}</h2>`+Object.entries(g[t]).map(([gr,ex])=>`<p style="margin:8px 0 2px"><b>${gr}</b></p>`+Object.entries(ex).map(([n,ss])=>`<div class="li" style="display:block"><div>${esc(n)}</div>`+ss.map(x=>`<div class="tgt">Satz ${x.i}: ${x.L.w?esc(x.L.w)+' kg':'–'} × ${x.L.r?esc(x.L.r):'–'}${x.L.d?'':' (nicht abgehakt)'}</div>`).join('')+'</div>').join('')).join('')+'</div>').join('')}
+ return ds.map(t=>`<div class="card"><h2>${wd(t)}, ${fd(t)}${t.slice(0,4)}</h2>`+Object.entries(g[t]).map(([gr,ex])=>`<p style="margin:8px 0 2px"><b>${gr}</b></p>`+Object.entries(ex).map(([n,ss])=>`<div class="li" style="display:block"><div>${esc(n)}</div>`+ss.map(x=>x.note?`<div class="tgt"><b>Notiz:</b> ${esc(x.note)}</div>`:`<div class="tgt">Satz ${x.i}: ${x.L.w?esc(x.L.w)+' kg':'–'} × ${x.L.r?esc(x.L.r):'–'}${x.L.d?'':' (nicht abgehakt)'}</div>`).join('')+'</div>').join('')).join('')+'</div>').join('')}
 function menuHtml(){const mv=S.mv||'A',v=MENU[mv];
  return '<div class="card"><h2>Wochen-Speiseplan</h2><div class="chips">'+Object.keys(MENU).map(k=>`<button class="chip ${k==mv?'on':''}" onclick="S.mv='${k}';save();render()">${MENU[k].n}</button>`).join('')+'</div><div class="tgt">Vegetarisch, Richtwerte in kcal. Mit dem Gainer-Shake (je nach Produkt etwa 500 kcal) kommst du ungefähr auf dein Tagesziel. Mit + übernimmst du eine Mahlzeit ins heutige Tagebuch.</div>'+v.d.map(m=>`<div class="li" style="display:block"><b>${m[0]}</b> <span class="tgt">${m[1][1]+m[2][1]+m[3][1]} kcal</span>`+['Früh','Mittag','Abend'].map((l,i)=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>${l}: ${m[i+1][0]} (${m[i+1][1]})</span><button class="chip" aria-label="Ins Tagebuch übernehmen" onclick="addM(${i},'${m[0]}')">+</button></div>`).join('')+'</div>').join('')+'</div>'}
 function addM(i,dn){const m=MENU[S.mv||'A'].d.find(x=>x[0]==dn),x=m[i+1];(S.f[today()]=S.f[today()]||[]).push({n:x[0],k:x[1]});save();render()}
