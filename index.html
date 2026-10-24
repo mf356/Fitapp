@@ -13,9 +13,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Condensed:wght@600;700&display=swap">
 <style>
-:root{--bg:#EEF0F3;--sf:#fff;--tx:#14181D;--mu:#5B6572;--ln:#D5D9DF;--ac:#2F5DA8;--ok:#2E7D5B;--okbg:#DDF0E7;--hl:#D7263D;--hl2:#F08C00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161B;--sf:#1B2128;--tx:#E8ECF0;--mu:#9AA5B1;--ln:#2B333C;--ac:#6C9BE0;--ok:#5BC196;--okbg:#1C3A2E;--hl:#FF5468;--hl2:#FFB020}}
-:root[data-theme="dark"]{--bg:#12161B;--sf:#1B2128;--tx:#E8ECF0;--mu:#9AA5B1;--ln:#2B333C;--ac:#6C9BE0;--ok:#5BC196;--okbg:#1C3A2E;--hl:#FF5468;--hl2:#FFB020}
+:root{--rdbg:#FBE1E4;--dn:#C62339;--bg:#EEF0F3;--sf:#fff;--tx:#14181D;--mu:#5B6572;--ln:#D5D9DF;--ac:#2F5DA8;--ok:#2E7D5B;--okbg:#DDF0E7;--hl:#D7263D;--hl2:#F08C00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--rdbg:#4A2029;--dn:#E0455A;--bg:#12161B;--sf:#1B2128;--tx:#E8ECF0;--mu:#9AA5B1;--ln:#2B333C;--ac:#6C9BE0;--ok:#5BC196;--okbg:#1C3A2E;--hl:#FF5468;--hl2:#FFB020}}
+:root[data-theme="dark"]{--rdbg:#4A2029;--dn:#E0455A;--bg:#12161B;--sf:#1B2128;--tx:#E8ECF0;--mu:#9AA5B1;--ln:#2B333C;--ac:#6C9BE0;--ok:#5BC196;--okbg:#1C3A2E;--hl:#FF5468;--hl2:#FFB020}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 textarea.note{display:block;width:100%;margin:8px 0 0;padding:8px 10px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;font-size:18px;resize:vertical}
@@ -43,6 +43,11 @@ button{font:inherit;cursor:pointer}
 .set{display:flex;gap:8px;align-items:center;margin-top:8px}
 .set input{width:84px}
 .chk{width:46px;height:46px;border-radius:50%;border:2px solid var(--ln);background:var(--sf);color:var(--mu);font:700 20px "Barlow Condensed",sans-serif}
+.set.dn{background:var(--rdbg);border-radius:12px;padding:6px;margin:8px -6px 0}
+.set.dn .chk.on{background:var(--dn);border-color:var(--dn);color:#fff}
+.set.dn input{border-color:var(--dn)}
+.card.alldn{border-left:5px solid var(--dn)}
+.wu li{margin:6px 0}.wu ul{margin:6px 0 0;padding-left:20px}
 .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabs button{flex:1;padding:14px 4px;border:0;background:none;color:var(--mu);font-size:17px}
@@ -127,23 +132,43 @@ function wk(){const d=new Date();d.setDate(d.getDate()-(d.getDay()+6)%7);return 
 var READY=false;
 function save(){if(READY)S.mt=Date.now();try{localStorage.setItem('fit1',JSON.stringify(S))}catch(e){alert('Der Speicher ist voll. Lösche ältere Fotos.')}gdQueue()}
 
+
+const WUG={
+Brust:['Schulterkreisen vorwärts und rückwärts (je 10)','Armkreisen groß, dann klein (je 10)','Liegestütze an der Wand oder auf den Knien (10)','Mit leichtem Gewicht 1 bis 2 Aufwärmsätze der ersten Übung (12 Wdh.)'],
+Rücken:['Katze-Kuh im Vierfüßlerstand (10)','Schulterblätter zusammenziehen und lösen (15)','Armkreisen mit Band oder ohne (10)','Mit leichtem Gewicht 1 bis 2 Aufwärmsätze der ersten Übung (12 Wdh.)'],
+Beine:['Kniebeugen ohne Gewicht (15)','Ausfallschritte im Wechsel (10 pro Seite)','Beinschwingen vor und zurück (10 pro Seite)','Hüftkreisen (10 pro Richtung)','Mit leichtem Gewicht 1 bis 2 Aufwärmsätze der ersten Übung (12 Wdh.)'],
+Schultern:['Schulterkreisen (je 10)','Armkreisen groß (je 10)','Arme seitlich heben ohne Gewicht (15)','Mit leichten Hanteln oder Band Face Pulls (15)'],
+Bauch:['Katze-Kuh im Vierfüßlerstand (10)','Hüftkreisen (10 pro Richtung)','Rumpfdrehen im Stand (10 pro Seite)','Bergsteiger langsam (20 Sekunden)']};
+const CDG={
+Brust:['Brustdehnung im Türrahmen (30 Sek. pro Seite)','Arm quer vor die Brust ziehen (20 Sek. pro Seite)','Kindhaltung mit gestreckten Armen (30 Sek.)'],
+Rücken:['Kindhaltung (40 Sek.)','Katze-Kuh langsam (8)','Oberkörper seitlich neigen (20 Sek. pro Seite)','Arme vorn verschränken und Rücken runden (20 Sek.)'],
+Beine:['Oberschenkelvorderseite im Stand dehnen (30 Sek. pro Seite)','Oberschenkelrückseite im Sitzen dehnen (30 Sek. pro Seite)','Wade an der Wand dehnen (30 Sek. pro Seite)','Taube oder Sitz-Vierer fürs Gesäß (30 Sek. pro Seite)'],
+Schultern:['Arm quer vor die Brust ziehen (30 Sek. pro Seite)','Trizeps-Dehnung hinter dem Kopf (20 Sek. pro Seite)','Nacken neigen, Ohr zur Schulter (20 Sek. pro Seite)','Schultern kreisen und lockern (10)'],
+Bauch:['Kobra auf dem Bauch (30 Sek.)','Kindhaltung (30 Sek.)','Rückenlage, Knie zur Brust ziehen (30 Sek.)','Seitliche Dehnung im Stand (20 Sek. pro Seite)']};
+const WUA=['Locker bewegen: 3 bis 5 Minuten zügig gehen, Rad fahren oder auf der Stelle marschieren','Armkreisen und Hampelmänner (30 Sekunden)'];
+const CDA=['Ruhig weitergehen, bis der Puls runtergeht (2 bis 3 Minuten)','Tief durch die Nase ein- und durch den Mund ausatmen (5 Atemzüge)'];
+function wcK(t){return wk()+'|'+S.sel+'|'+t}
+function wcTog(t){S.wc=S.wc||{};const k=wcK(t);if(S.wc[k])delete S.wc[k];else S.wc[k]=today();save();render()}
+function wcCard(t){const d=S.days[S.sel],w=t=='w',k='wc'+t+S.sel,o=OPEN[k],on=S.wc&&S.wc[wcK(t)],
+ L=(w?WUA.concat(WUG[d.g]||[]):(CDG[d.g]||[]).concat(CDA)).map(x=>`<li>${esc(x)}</li>`).join('');
+ return `<div class="card wu${on?' alldn':''}"><div class="set${on?' dn':''}" style="justify-content:space-between"><div><h3 style="margin:0">${w?'Aufwärmen':'Cool-down'}</h3><div class="tgt">${w?'5 bis 8 Minuten, vor dem ersten Satz':'5 Minuten, Dehnen und Runterkommen'}</div></div><button class="chk ${on?'on':''}" aria-label="${w?'Aufwärmen':'Cool-down'} erledigt" onclick="wcTog('${t}')">✓</button></div><p style="margin:8px 0 0"><button class="chip${o?' on':''}" aria-expanded="${!!o}" onclick="tgl('${k}')">Übungen ${o?'ausblenden':'anzeigen'}</button></p>${o?`<ul>${L}</ul><div class="tgt">Locker und ohne Schmerz, keine Wippbewegungen beim Dehnen.</div>`:''}</div>`}
 function plan(){
  const D=S.days;if(S.sel>=D.length)S.sel=0;
  const d=D[S.sel],ex=X[d.g][d.l];let tot=0,done=0;const dts=[...new Set(Object.entries(S.log).filter(([k,L])=>k.startsWith(wk()+'|'+S.sel+'|')&&L.t&&(L.d||L.w||L.r)).map(([k,L])=>L.t))].sort();
- let h=trCard()+'<div class="chips">'+D.map((x,i)=>`<button class="chip ${i==S.sel?'on':''}" onclick="S.sel=${i};render()">${x.g}</button>`).join('')+'</div>'+hrCard();
+ let h=trCard()+'<div class="chips">'+D.map((x,i)=>`<button class="chip ${i==S.sel?'on':''}" onclick="S.sel=${i};render()">${x.g}</button>`).join('')+'</div>'+hrCard()+wcCard('w');
  let body='';
  ex.forEach((e,ei)=>{const[n,s,r]=e.split('|');let sets='';
   for(let i=0;i<+s;i++){const k=wk()+'|'+S.sel+'|'+ei+'|'+i,L=S.log[k]||{};tot++;if(L.d)done++;
-   sets+=`<div class="set"><button class="chk ${L.d?'on':''}" aria-label="Satz ${i+1} abhaken" onclick="tog('${k}')">${i+1}</button><input inputmode="decimal" placeholder="kg" aria-label="Gewicht" value="${esc(L.w||'')}" onchange="inp('${k}','w',this.value)"><input inputmode="numeric" placeholder="Wdh." aria-label="Wiederholungen" value="${esc(L.r||'')}" onchange="inp('${k}','r',this.value)"></div>`}
-  body+=`<div class="card ex"><h3>${esc(n)}</h3><div class="tgt">${s} Sätze × ${r}${/^\d+$/.test(r)?' Wdh.':''}</div>${infoBtn(S.sel+'|'+ei,n,d.g)}${noteField(n,d.g)}${sets}</div>`});
+   sets+=`<div class="set${L.d?' dn':''}"><button class="chk ${L.d?'on':''}" aria-label="Satz ${i+1} abhaken" onclick="tog('${k}')">${i+1}</button><input inputmode="decimal" placeholder="kg" aria-label="Gewicht" value="${esc(L.w||'')}" onchange="inp('${k}','w',this.value)"><input inputmode="numeric" placeholder="Wdh." aria-label="Wiederholungen" value="${esc(L.r||'')}" onchange="inp('${k}','r',this.value)"></div>`}
+  body+=`<div class="card ex${+s>0&&Array.from({length:+s},(_,i)=>(S.log[wk()+'|'+S.sel+'|'+ei+'|'+i]||{}).d).every(Boolean)?' alldn':''}"><h3>${esc(n)}</h3><div class="tgt">${s} Sätze × ${r}${/^\d+$/.test(r)?' Wdh.':''}</div>${infoBtn(S.sel+'|'+ei,n,d.g)}${noteField(n,d.g)}${sets}</div>`});
  const XK=wk()+'|'+S.sel,XL=(S.ex&&S.ex[XK])||[];
  XL.forEach(e=>{let sets='';
   for(let i=0;i<e.s;i++){const k=XK+'|x'+e.id+'|'+i,L=S.log[k]||{};tot++;if(L.d)done++;
-   sets+=`<div class="set"><button class="chk ${L.d?'on':''}" aria-label="Satz ${i+1} abhaken" onclick="tog('${k}')">${i+1}</button><input inputmode="decimal" placeholder="kg" aria-label="Gewicht" value="${esc(L.w||'')}" onchange="inp('${k}','w',this.value)"><input inputmode="numeric" placeholder="Wdh." aria-label="Wiederholungen" value="${esc(L.r||'')}" onchange="inp('${k}','r',this.value)"></div>`}
+   sets+=`<div class="set${L.d?' dn':''}"><button class="chk ${L.d?'on':''}" aria-label="Satz ${i+1} abhaken" onclick="tog('${k}')">${i+1}</button><input inputmode="decimal" placeholder="kg" aria-label="Gewicht" value="${esc(L.w||'')}" onchange="inp('${k}','w',this.value)"><input inputmode="numeric" placeholder="Wdh." aria-label="Wiederholungen" value="${esc(L.r||'')}" onchange="inp('${k}','r',this.value)"></div>`}
   body+=`<div class="card ex"><h3>${esc(e.n)}</h3><div class="tgt">Zusatzübung, nur diese Woche</div>${infoBtn(S.sel+'|x'+e.id,e.n,d.g)}${noteField(e.n,d.g)}${sets}<div class="row" style="margin-top:10px"><button class="chip" onclick="xSet(${e.id})">+ Satz</button><button class="chip" onclick="xDel(${e.id})">Übung entfernen</button></div></div>`});
  const sg=suggs(d);
  body+=`<div class="card"><h3>Weitere Übung</h3><div class="row" style="margin-top:8px"><input id="xn" placeholder="Name der Übung" aria-label="Name der Übung" style="flex:1" maxlength="60"><button class="btn" onclick="xAdd()">Hinzufügen</button></div>${sg.length?`<div class="tgt" style="margin-top:10px">Vorschläge zur Auswahl, tippe zum Hinzufügen:</div><div class="chips" style="flex-wrap:wrap;margin-top:6px">${sg.map(n=>`<button class="chip" data-n="${esc(n)}" onclick="xAdd(this.dataset.n)">${esc(n)}</button>`).join('')}</div>`:''}</div>`;
- h+=`<div class="card"><div class="row"><select aria-label="Ort" onchange="S.days[S.sel].l=this.value;save();render()">${Object.entries(LOC).map(([k,v])=>`<option value="${k}" ${k==d.l?'selected':''}>${v}</option>`).join('')}</select></div><div class="bar"><i style="width:${tot?done/tot*100:0}%"></i></div><div class="tgt">${done} von ${tot} Sätzen erledigt${dts.length?', ausgeführt am '+dts.map(x=>wd(x).slice(0,2)+' '+fd(x)).join(' und '):''}</div></div>`+body+finBtn();
+ h+=`<div class="card"><div class="row"><select aria-label="Ort" onchange="S.days[S.sel].l=this.value;save();render()">${Object.entries(LOC).map(([k,v])=>`<option value="${k}" ${k==d.l?'selected':''}>${v}</option>`).join('')}</select></div><div class="bar"><i style="width:${tot?done/tot*100:0}%"></i></div><div class="tgt">${done} von ${tot} Sätzen erledigt${dts.length?', ausgeführt am '+dts.map(x=>wd(x).slice(0,2)+' '+fd(x)).join(' und '):''}</div></div>`+body+wcCard('c')+finBtn();
  return h}
 function fmtDur(sec){const m=Math.round(sec/60);if(m<1)return'weniger als 1 Minute';if(m<60)return m+(m==1?' Minute':' Minuten');const h=Math.floor(m/60),r=m%60;return h+' Std'+(r?' '+r+' Min':'')}
 function clk(sec){sec=Math.max(0,Math.floor(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)}
@@ -460,6 +485,7 @@ function finBtn(){const pre=wk()+'|'+S.sel+'|',has=Object.keys(S.log).some(k=>k.
  return `<div class="card"><button class="btn" style="width:100%" onclick="finishDay()">Training abschließen, Werte zurücksetzen</button><div class="tgt" style="margin-top:6px">Haken, Gewichte und Wiederholungen werden geleert, damit du beim nächsten Mal bei null startest. Notizen und Werte bleiben im Verlauf gespeichert.</div></div>`}
 function finishDay(){const pre=wk()+'|'+S.sel+'|',ts=Date.now();
  Object.keys(S.log).forEach(k=>{if(k.startsWith(pre)&&k.split('|').length==4){const L=S.log[k];if(L&&(L.d||L.w||L.r))S.log[k+'|a'+ts]=L;delete S.log[k]}});
+  if(S.wc)Object.keys(S.wc).forEach(k=>{if(k.startsWith(pre))delete S.wc[k]});
  const d=S.days[S.sel],nm=[...X[d.g][d.l].map(e=>e.split('|')[0]),...((S.ex&&S.ex[xKey()])||[]).map(e=>e.n)];
  S.nl=S.nl||[];nm.forEach(n=>{const k=noteKey(n,d.g);if(S.nt&&S.nt[k]){S.nl.push({t:today(),g:d.g,l:d.l,n,x:S.nt[k]});delete S.nt[k]}});
  save();render();scrollTo(0,0)}
